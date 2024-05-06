@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  runApp(QuizApp());
+}
+
+class QuizApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Quiz',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: QuizScreen(),
+    );
+  }
+}
+
+class QuizScreen extends StatefulWidget {
+  @override
+  _QuizScreenState createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  int _score = 0;
+  bool _answered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadScore();
+  }
+
+  void _loadScore() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _score = prefs.getInt('score') ?? 0;
+    });
+  }
+
+  void _saveScore(int newScore) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('score', newScore);
+  }
+
+  void _answerQuestion(bool isCorrect) {
+    if (!_answered) {
+      setState(() {
+        if (isCorrect) {
+          _score++;
+        }
+        _answered = true;
+      });
+      _saveScore(_score);
+    }
+  }
+
+  void _resetQuiz() {
+    setState(() {
+      _score = 0;
+      _answered = false;
+    });
+    _saveScore(_score);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Flutter Quiz'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Pertanyaan:',
+              style: TextStyle(fontSize: 20.0),
+            ),
+            SizedBox(height: 10.0),
+            Text(
+              'Ini adalah pertanyaan?',
+              style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20.0),
+            !_answered
+                ? Column(
+                    children: <Widget>[
+                      ElevatedButton(
+                        onPressed: () => _answerQuestion(true),
+                        child: Text('Benar'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _answerQuestion(false),
+                        child: Text('Salah'),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: <Widget>[
+                      Text(
+                        'Anda telah menjawab pertanyaan ini.',
+                        style: TextStyle(fontSize: 16.0),
+                      ),
+                      SizedBox(height: 10.0),
+                      ElevatedButton(
+                        onPressed: _resetQuiz,
+                        child: Text('Ulang Kuis'),
+                      ),
+                    ],
+                  ),
+            SizedBox(height: 20.0),
+            Text(
+              'Skor: $_score',
+              style: TextStyle(fontSize: 24.0),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
